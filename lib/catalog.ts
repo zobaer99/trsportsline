@@ -1,4 +1,5 @@
-export type Product = { slug: string; name: string; club: string; category: string; price: number; oldPrice?: number; image: string; badge?: string; edition: "Fan Edition" | "Player Edition"; description: string; metaTitle?: string; metaDescription?: string; ratingValue?: number; reviewCount?: number };
+export type ProductImage = { url: string; label: string };
+export type Product = { slug: string; name: string; club: string; category: string; price: number; oldPrice?: number; image: string; images?: ProductImage[]; badge?: string; edition: "Fan Edition" | "Player Edition"; description: string; metaTitle?: string; metaDescription?: string; ratingValue?: number; reviewCount?: number };
 
 export const products: Product[] = [
   { slug: "custom-team-kit", name: "Custom Team Performance Kit", club: "Made for your squad", category: "Custom Team Jerseys", price: 18, oldPrice: 24, image: "/products/custom-team-kit.webp", badge: "FROM $18", edition: "Fan Edition", description: "Your colors, your crest, your team. Custom performance jerseys start at $18 per piece for team orders." },
@@ -12,7 +13,14 @@ export const money = (amount: number) => new Intl.NumberFormat("en-US", { style:
 
 function normalizeProduct(input: Record<string, unknown>): Product {
   const image = String(input.image_url || input.image || "");
-  return { slug: String(input.slug || ""), name: String(input.name || ""), club: String(input.club || ""), category: String(input.category || "Fan Edition"), price: Number(input.price || 0), oldPrice: input.compare_at_price ? Number(input.compare_at_price) : input.oldPrice ? Number(input.oldPrice) : undefined, image, badge: input.badge ? String(input.badge) : undefined, edition: input.edition === "Player Edition" ? "Player Edition" : "Fan Edition", description: String(input.description || ""), metaTitle: input.meta_title ? String(input.meta_title) : undefined, metaDescription: input.meta_description ? String(input.meta_description) : undefined, ratingValue: input.rating_value ? Number(input.rating_value) : undefined, reviewCount: input.review_count ? Number(input.review_count) : undefined };
+  const backImage = typeof input.back_image_url === "string" ? input.back_image_url : "";
+  const galleryImages = Array.isArray(input.gallery_images) ? input.gallery_images.filter((url): url is string => typeof url === "string" && url.trim().length > 0) : [];
+  const images: ProductImage[] = [
+    ...(image ? [{ url: image, label: "Front" }] : []),
+    ...(backImage ? [{ url: backImage, label: "Back" }] : []),
+    ...galleryImages.map((url, index) => ({ url, label: `Photo ${index + 1}` })),
+  ];
+  return { slug: String(input.slug || ""), name: String(input.name || ""), club: String(input.club || ""), category: String(input.category || "Fan Edition"), price: Number(input.price || 0), oldPrice: input.compare_at_price ? Number(input.compare_at_price) : input.oldPrice ? Number(input.oldPrice) : undefined, image, images, badge: input.badge ? String(input.badge) : undefined, edition: input.edition === "Player Edition" ? "Player Edition" : "Fan Edition", description: String(input.description || ""), metaTitle: input.meta_title ? String(input.meta_title) : undefined, metaDescription: input.meta_description ? String(input.meta_description) : undefined, ratingValue: input.rating_value ? Number(input.rating_value) : undefined, reviewCount: input.review_count ? Number(input.review_count) : undefined };
 }
 
 export async function getCatalogProducts(): Promise<Product[]> {

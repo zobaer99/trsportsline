@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -86,5 +87,25 @@ class CustomerStorefrontTest extends TestCase
         $response->assertCreated()
             ->assertJsonPath('data.url', 'https://api.trsportsline.com/storage/'.$path);
         Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_storefront_product_exposes_front_back_and_gallery_images(): void
+    {
+        Product::create([
+            'slug' => 'gallery-jersey',
+            'name' => 'Gallery Jersey',
+            'category' => 'Fan Edition',
+            'price' => 28,
+            'image_url' => 'https://api.trsportsline.com/storage/front.jpg',
+            'back_image_url' => 'https://api.trsportsline.com/storage/back.jpg',
+            'gallery_images' => ['https://api.trsportsline.com/storage/detail.jpg'],
+            'variants' => ['sizes' => ['M', 'L']],
+            'stock' => 10,
+        ]);
+
+        $this->getJson('/api/products/gallery-jersey')
+            ->assertOk()
+            ->assertJsonPath('data.back_image_url', 'https://api.trsportsline.com/storage/back.jpg')
+            ->assertJsonPath('data.gallery_images.0', 'https://api.trsportsline.com/storage/detail.jpg');
     }
 }
