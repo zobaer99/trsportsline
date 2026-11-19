@@ -54,3 +54,29 @@ Bangladesh checkout validates `01[3-9]XXXXXXXX`, loads delivery charges from Lar
 ## SEO
 
 Product metadata and JSON-LD are rendered server-side. `/sitemap.xml` refreshes product slugs from Laravel with sample-catalog fallback; `/robots.txt` excludes checkout and API routes.
+
+## Deploying to cPanel
+
+The frontend needs a cPanel Node.js application. In **Setup Node.js App**, create a production app with Node.js 22, application root `trsportsline.axeocon.com/trsportsline`, application URL `trsportsline.axeocon.com`, and startup file `server.js`. Use the HTTPS URL for the site after SSL is enabled. The app root is relative to the cPanel home directory.
+
+The shell may not expose `node` or `npm` until the Node.js app exists. After creating it, copy the virtual-environment activation command shown on the cPanel app page, run it in Terminal, then from the application root run:
+
+```bash
+npm install --include=dev
+npm run build
+```
+
+Set `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_API_URL` before building. For this domain, use `https://trsportsline.axeocon.com` for the site URL and, if Laravel is hosted on its own subdomain, `https://api.trsportsline.axeocon.com/api` for the API URL. Add the private tracking variables in the cPanel app environment; keep them out of Git and never prefix them with `NEXT_PUBLIC_`. Restart the Node.js app after the build.
+
+For Laravel, create an API subdomain whose document root points to the repository's `laravel/public` directory. Create a MySQL database and user in cPanel, put their values in `laravel/.env` on the server, set `APP_URL` to the API subdomain and `FRONTEND_URL` to `https://trsportsline.axeocon.com`, then install PHP dependencies and initialize the app:
+
+```bash
+cd ~/trsportsline.axeocon.com/trsportsline/laravel
+php composer.phar install --no-dev --optimize-autoloader
+php artisan key:generate
+php artisan migrate --seed
+php artisan storage:link
+php artisan config:cache
+```
+
+If Composer is not installed, install a project-local `composer.phar` in the Laravel directory using Namecheap's shared-hosting Composer instructions. PHP 8.2 is available in the current cPanel shell; select PHP 8.2 or newer and enable Laravel's required extensions in **Select PHP Version**. Never upload production `.env` files or database credentials to GitHub.
