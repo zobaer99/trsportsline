@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CustomerStorefrontTest extends TestCase
@@ -67,5 +69,22 @@ class CustomerStorefrontTest extends TestCase
         $token = $admin->createToken('admin-dashboard', ['admin'])->plainTextToken;
 
         $this->withToken($token)->getJson('/api/admin/products')->assertOk();
+    }
+
+    public function test_admin_media_upload_returns_a_single_public_storage_url(): void
+    {
+        Storage::fake('public', ['url' => 'https://api.trsportsline.com/storage']);
+
+        $admin = User::create(['name' => 'Store admin', 'email' => 'admin@example.com', 'password' => 'a-strong-password']);
+        $token = $admin->createToken('admin-dashboard', ['admin'])->plainTextToken;
+
+        $response = $this->withToken($token)->postJson('/api/admin/media', [
+            'file' => UploadedFile::fake()->image('jersey.jpg'),
+        ]);
+        $path = $response->json('data.path');
+
+        $response->assertCreated()
+            ->assertJsonPath('data.url', 'https://api.trsportsline.com/storage/'.$path);
+        Storage::disk('public')->assertExists($path);
     }
 }

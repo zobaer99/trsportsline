@@ -14,7 +14,7 @@ class MediaController extends Controller
         $files = collect(Storage::disk('public')->files('storefront'))->map(fn ($path) => [
             'name' => basename($path),
             'path' => $path,
-            'url' => request()->getSchemeAndHttpHost().Storage::disk('public')->url($path),
+            'url' => Storage::disk('public')->url($path),
             'size' => Storage::disk('public')->size($path),
         ])->sortByDesc('name')->values();
         return response()->json(['data' => $files]);
@@ -27,7 +27,7 @@ class MediaController extends Controller
         return response()->json(['data' => [
             'name' => basename($path),
             'path' => $path,
-            'url' => $request->getSchemeAndHttpHost().Storage::disk('public')->url($path),
+            'url' => Storage::disk('public')->url($path),
             'size' => Storage::disk('public')->size($path),
         ]], 201);
     }
