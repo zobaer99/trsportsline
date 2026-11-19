@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+coverage/
+.env*
+!.env.example
+laravel/vendor/
+laravel/.env
+laravel/storage/*.key
+laravel/bootstrap/cache/*.php
+laravel/.phpunit.cache/
+laravel/storage/**
+!laravel/storage/**/
+!laravel/storage/**/.gitignore
+*.tsbuildinfo
